@@ -1,50 +1,88 @@
-import React from 'react';
+import React, { useState } from "react";
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
-import { Button } from 'react-bootstrap';
 import ChoiceCard from "./components/ChoiceCard";
 import NaviBar from "./components/NaviBar";
 import Footer from "./components/Footer";
-import ScoreCard from "./components/ScoreCard"
-
-const choices = {
-  rock1:
-    "https://opengameart.org/sites/default/files/forum-attachments/very%20simple%20rock_0.png",
-  rock: "./rock.svg",
-  paper: "http://pngimagesfree.com/Paper/Thumb/blank-note-paper-free-clipa.png",
-  scissors: "http://www.pngmart.com/files/1/Scissors-PNG-Pic.png"
-};
+import { CHOICES, getRoundOutcome } from './utils';
+import ChoiceButtons from './components/ChoiceButtons';
+import { Button } from 'react-bootstrap';
 
 
 function App() {
+
+  const [showGame, setShowGame] = useState(false);
+  const [prompt, setGamePrompt] = useState("Start");
+  const [playerChoice, setPlayerChoice] = useState(null);
+  const [computerChoice, setComputerChoice] = useState(null);
+  const [previousWinner, setPreviousWinner] = useState(null);
+  const [gameHistory, setGameHistory] = useState([]);
+
+
+  const onPlayerChoose = playerChoice => {
+    const [result, compChoice] = getRoundOutcome(playerChoice);
+    const newUserChoice = CHOICES[playerChoice];
+    const newComputerChoice = CHOICES[compChoice];
+    if (result === "Victory!") {
+      setPreviousWinner("YOU");
+    } else if (result === "Defeat!") {
+      setPreviousWinner("THE EVIL");
+    } else {
+      setPreviousWinner("Tie");
+    }
+
+    gameHistory.push(result);
+    setPlayerChoice(newUserChoice);
+    setComputerChoice(newComputerChoice);
+    setGamePrompt(result);
+    setGameHistory(gameHistory);
+
+    console.log('hi', result, compChoice)
+  };
+  console.log(playerChoice, computerChoice, previousWinner)
   return (
     <>
       <NaviBar />
-      <div className="App container-fluid d-flex flex-row justify-content-center align-items-center mt-3">
-        <div className='container-fluid d-flex flex-column p-0'>
-          <h1 className='display-4 font-weight-bold'>Let's Play!O □ X</h1>
-          <div className='container d-flex flex-row justify-content-around'>
-            <Button className='w-25 btn btn-danger'>Rock</Button>
-            <Button className='w-25 btn btn-danger'>Paper</Button>
-            <Button className='w-25 btn btn-danger'>Scissors</Button>
-          </div>
+      {!showGame &&  <div className='container d-flex flex-column align-items-center pt-5'>
+        <Button className='btn btn-dark w-25' onClick={() => setShowGame(!showGame)}>Let's Play</Button>
+      </div>
+      }
+      <div className="App container-fluid d-flex flex-row justify-content-center align-items-top pt-3">
+
+
+        {showGame && <div className='container-fluid d-flex flex-column p-0 col-8'>
+          <h1><strong>{prompt}</strong></h1>
           <div className='container-fluid d-flex flex-row justify-content-center align-items-center p-3 my-2 '>
             <ChoiceCard
-              title='You'
-              winner={false}
-              imgURL={choices.rock}
+              title='YOU'
+              previousWinner={previousWinner}
+              imgURL={playerChoice && playerChoice.url}
             />
-            <h2 className='display-2 font-weight-bold text-dark px-3'>VS</h2>
+            <h5 className='display-4 font-weight-bold text-dark px-3'>VS</h5>
             <ChoiceCard
-              title='The Evil'
-              winner={true}
-              imgURL={choices.paper}
+              title='THE EVIL'
+              previousWinner={previousWinner}
+              imgURL={computerChoice && computerChoice.url}
             />
           </div>
+          <ChoiceButtons
+            onPlayerChoose={onPlayerChoose}
+          />
         </div>
-        <ScoreCard />
+        }
       </div>
+      {showGame && <div className='history-card container d-flex flex-column align-items-center justify-content-start'>
+          <h3 className='mb-3'><u>History</u></h3>
+          <ul className='list-unstyled'>
+            {gameHistory.map(result => {
+              return <li>{result}</li>;
+            })}
+          </ul>
+        </div>
+        }
+
       <Footer />
+
     </>
   );
 }
